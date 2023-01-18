@@ -1,13 +1,8 @@
 import { type NextPage } from "next";
 import Head from "next/head";
-import Link from "next/link";
 import Script from "next/script";
 
-import { trpc } from "../utils/trpc";
-
 const Home: NextPage = () => {
-  const hello = trpc.example.hello.useQuery({ text: "from tRPC" });
-
   return (
     <>
       <Head>
@@ -17,49 +12,10 @@ const Home: NextPage = () => {
       </Head>
       <Script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD1ejZgwjj-xj4xsxFA8zVgZirFFTL6KEI&libraries=places&callback=initMap" />
       <main className="container mx-auto flex min-h-screen flex-col items-center justify-center p-4">
-        <h1 className="text-5xl font-extrabold leading-normal text-gray-700 md:text-[5rem]">
-          Create <span className="text-purple-300">T3</span> App
-        </h1>
-        <p className="text-2xl text-gray-700">This stack uses:</p>
         <div className="mt-3 grid gap-3 pt-3 text-center md:grid-cols-2 lg:w-2/3">
           <div id="map" className="h-96 w-full" />
-          <div id="places" className="h-96 w-full" />
-          <button id="more" className="h-96 w-full">
-            More
-          </button>
-          <TechnologyCard
-            name="NextJS"
-            description="The React framework for production"
-            documentation="https://nextjs.org/"
-          />
-          <TechnologyCard
-            name="TypeScript"
-            description="Strongly typed programming language that builds on JavaScript, giving you better tooling at any scale"
-            documentation="https://www.typescriptlang.org/"
-          />
-          <TechnologyCard
-            name="TailwindCSS"
-            description="Rapidly build modern websites without ever leaving your HTML"
-            documentation="https://tailwindcss.com/"
-          />
-          <TechnologyCard
-            name="tRPC"
-            description="End-to-end typesafe APIs made easy"
-            documentation="https://trpc.io/"
-          />
-          <TechnologyCard
-            name="Next-Auth"
-            description="Authentication for Next.js"
-            documentation="https://next-auth.js.org/"
-          />
-          <TechnologyCard
-            name="Prisma"
-            description="Build data-driven JavaScript & TypeScript apps in less time"
-            documentation="https://www.prisma.io/docs/"
-          />
-        </div>
-        <div className="flex w-full items-center justify-center pt-6 text-2xl text-blue-500">
-          {hello.data ? <p>{hello.data.greeting}</p> : <p>Loading..</p>}
+          <div id="place-id" className="h-96 w-full" />
+          <div id="places" className="h-24 w-full" />
         </div>
       </main>
     </>
@@ -67,33 +23,6 @@ const Home: NextPage = () => {
 };
 
 export default Home;
-
-type TechnologyCardProps = {
-  name: string;
-  description: string;
-  documentation: string;
-};
-
-const TechnologyCard: React.FC<TechnologyCardProps> = ({
-  name,
-  description,
-  documentation,
-}) => {
-  return (
-    <section className="flex flex-col justify-center rounded border-2 border-gray-500 p-6 shadow-xl duration-500 motion-safe:hover:scale-105">
-      <h2 className="text-lg text-gray-700">{name}</h2>
-      <p className="text-sm text-gray-600">{description}</p>
-      <Link
-        className="m-auto mt-3 w-fit text-sm text-violet-500 underline decoration-dotted underline-offset-2"
-        href={documentation}
-        target="_blank"
-        rel="noreferrer"
-      >
-        Documentation
-      </Link>
-    </section>
-  );
-};
 
 // This example requires the Places library. Include the libraries=places
 // parameter when you first load the API. For example:
@@ -118,20 +47,13 @@ function initMap(): void {
     { placeId: "ChIJN1t_tDeuEmsRUsoyG83frY4" },
     (place, status) => {
       if (status === window.google.maps.places.PlacesServiceStatus.OK) {
+        document.getElementById("place-id")!.textContent =
+          JSON.stringify(place);
         console.log("PLACE INFO", place);
       }
     }
   );
   let getNextPage: () => void | false;
-  const moreButton = document.getElementById("more") as HTMLButtonElement;
-
-  moreButton.onclick = function () {
-    moreButton.disabled = true;
-
-    if (getNextPage) {
-      getNextPage();
-    }
-  };
 
   // Perform a nearby search.
   service.nearbySearch(
@@ -144,7 +66,6 @@ function initMap(): void {
       if (status !== "OK" || !results) return;
 
       addPlaces(results, map);
-      moreButton.disabled = !pagination || !pagination.hasNextPage;
 
       if (pagination && pagination.hasNextPage) {
         getNextPage = () => {
